@@ -43,6 +43,8 @@ function sanitizeShortcut(shortcut) {
 }
 
 function moduleStoragePath(ctx, fileName) {
+  const stateDir = typeof ctx.moduleStateDir === 'function' ? String(ctx.moduleStateDir() || '').trim() : '';
+  if (stateDir) return `${stateDir}/${fileName}`;
   const dir = typeof ctx.moduleDir === 'function' ? String(ctx.moduleDir() || '').trim() : '';
   return dir ? `${dir}/${fileName}` : `modules/shortcuts/${fileName}`;
 }
