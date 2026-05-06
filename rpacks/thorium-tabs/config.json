@@ -1,0 +1,7 @@
+{
+  "targetExe": "thorium.exe",
+  "altWheelUp": "Ctrl+Tab",
+  "altWheelDown": "Ctrl+Shift+Tab",
+  "altLeftClick": "Ctrl+W",
+  "altRightClick": "Ctrl+Shift+T"
+}

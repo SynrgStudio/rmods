@@ -1,0 +1,15 @@
+name = "taskbar-volume"
+version = "0.1.1"
+api_version = "1"
+kind = "script"
+entry = "module.js"
+capabilities = ["commands"]
+priority = 60
+description = "Control system volume with mouse wheel over the Windows taskbar."
+tags = "resident,windows,mouse,volume"
+
+[resident]
+enabled = true
+command = "bin/taskbar-volume.exe"
+autostart = true
+shutdown = "kill"

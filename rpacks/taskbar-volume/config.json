@@ -1,0 +1,6 @@
+{
+  "taskbarClasses": ["Shell_TrayWnd", "Shell_SecondaryTrayWnd"],
+  "wheelUp": "Volume_Up",
+  "wheelDown": "Volume_Down",
+  "middleClickOnTaskbarBackground": "Volume_Mute"
+}

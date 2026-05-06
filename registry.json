@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-06T22:02:31Z",
+  "generated_at": "2026-05-06T23:38:44Z",
   "modules": [
     {
       "id": "calculator",
@@ -31,8 +31,8 @@
       "description": "Pick a screen color and copy it to clipboard.",
       "kind": "rpack",
       "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/color-picker",
-      "sha256": "4e563c8f5da1eaf6eab9587a7c15e7b8ad09621c9c7e3ef2bfa9d3fc8ea6f291",
-      "size": 267208,
+      "sha256": "10b106ad7817dc37e375dc461c5b6c8e142d91445a8933596e94c46f2cda4019",
+      "size": 267216,
       "files": [
         {
           "path": "bin/color-picker.exe",
@@ -51,8 +51,8 @@
         },
         {
           "path": "module.toml",
-          "sha256": "3eea1caeac499b70d2b1a1a4b3bbe64ffdc3fa3de32a03f67608d489168f7bb0",
-          "size": 205
+          "sha256": "abb2d7540db90a4ee0e1b5b83ea4403278974e2786f8c4807d053bbca14d2ce9",
+          "size": 213
         },
         {
           "path": "README.md",
@@ -80,8 +80,8 @@
       "description": "Exact search aliases for launching favorite targets.",
       "kind": "rpack",
       "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/shortcuts",
-      "sha256": "e723695f0cf04091a185b0c75a479180d1ba1d354c7ebfa86e015eef84d0872d",
-      "size": 8542,
+      "sha256": "5ba4a0b58f4f0a5e3581457c74608c7bfb55852d4dd7c396314152b6fb0ba368",
+      "size": 8550,
       "files": [
         {
           "path": "config.json",
@@ -95,8 +95,8 @@
         },
         {
           "path": "module.toml",
-          "sha256": "00b92356e10a9787d2febdf9cfa96153a7a5a158c4e22fcc068c48f3a4b0f7cb",
-          "size": 229
+          "sha256": "2773e56387ae528e0837f55ee399c7b000daab262aae6f44df6ffa3c62bde5c6",
+          "size": 237
         },
         {
           "path": "README.md",
@@ -105,6 +105,49 @@
         }
       ],
       "tags": []
+    },
+    {
+      "id": "taskbar-volume",
+      "name": "taskbar-volume",
+      "version": "0.1.1",
+      "description": "Control system volume with mouse wheel over the Windows taskbar.",
+      "kind": "rpack",
+      "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/taskbar-volume",
+      "sha256": "0d79228b7cf119bad4f6756664e9597350ec1836cd5a85a69abc278417ee0ad4",
+      "size": 119660,
+      "files": [
+        {
+          "path": "bin/taskbar-volume.exe",
+          "sha256": "87d46a95307ee7fab3cb2cf0a34f2e41e5adc1cc2f1d53152c641e6491075695",
+          "size": 117760
+        },
+        {
+          "path": "config.json",
+          "sha256": "997e8e90c0cf4a5e84270442047a71b89ff8e53f1876f33d1cff0ca5d44da0e8",
+          "size": 175
+        },
+        {
+          "path": "module.js",
+          "sha256": "8dea1e10ba68de3f447170e2e22e7079ee0d2613e82be1f1802ad937fc49f0b7",
+          "size": 639
+        },
+        {
+          "path": "module.toml",
+          "sha256": "3cb5da946e9aead8d2069822ea036675154df60e6838c58a5be3b7dc2d9a795a",
+          "size": 355
+        },
+        {
+          "path": "README.md",
+          "sha256": "b053529dff5bb12623e59f0cd5deb9f8f652d4974caee424d695592b7250c865",
+          "size": 731
+        }
+      ],
+      "tags": [
+        "resident",
+        "windows",
+        "mouse",
+        "volume"
+      ]
     },
     {
       "id": "terminal",
@@ -116,6 +159,50 @@
       "sha256": "5a6aae8b9496578bdb4fcf121281259f5fa792f6cbd8c2d47a491b8a0f6fc415",
       "size": 1655,
       "tags": []
+    },
+    {
+      "id": "thorium-tabs",
+      "name": "thorium-tabs",
+      "version": "0.1.2",
+      "description": "Use Alt+mouse gestures for Thorium tab navigation and management.",
+      "kind": "rpack",
+      "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/thorium-tabs",
+      "sha256": "4f42433b3554ccb56733a022bd5b088efac440e09e1ae6ac12bcd56d60980cf8",
+      "size": 122776,
+      "files": [
+        {
+          "path": "bin/thorium-tabs.exe",
+          "sha256": "32d41e61ac35807cb013cb3829550279a8437c2370b67462dbf260c6a470d2e5",
+          "size": 120832
+        },
+        {
+          "path": "config.json",
+          "sha256": "4f81f0f7e32f76eec186a47224ebd58d1708a2609d4234632c5cbd8577729e90",
+          "size": 160
+        },
+        {
+          "path": "module.js",
+          "sha256": "02ed93084404029f6b26ab836449262800149fd89cbc7633d5d10306f4b52a12",
+          "size": 632
+        },
+        {
+          "path": "module.toml",
+          "sha256": "e105b1bdb462e5f9e6362bd627b5fbd53669755331b8003fe4e8693310c67827",
+          "size": 361
+        },
+        {
+          "path": "README.md",
+          "sha256": "9d4db9d9e5599eaf99884ba68b606f071f6b6ccd138829ddb61abc5c6fd94fb1",
+          "size": 791
+        }
+      ],
+      "tags": [
+        "resident",
+        "windows",
+        "mouse",
+        "browser",
+        "thorium"
+      ]
     },
     {
       "id": "url-open",

@@ -1,0 +1,15 @@
+name = "thorium-tabs"
+version = "0.1.2"
+api_version = "1"
+kind = "script"
+entry = "module.js"
+capabilities = ["commands"]
+priority = 60
+description = "Use Alt+mouse gestures for Thorium tab navigation and management."
+tags = "resident,windows,mouse,browser,thorium"
+
+[resident]
+enabled = true
+command = "bin/thorium-tabs.exe"
+autostart = true
+shutdown = "kill"

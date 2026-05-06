@@ -28,6 +28,13 @@ rmods/
 
 An `rpack` is a folder, not a zip/archive.
 
+Some rpacks declare a `[resident]` helper in `module.toml`. `rmenu-daemon` starts/stops those helpers after install and on daemon lifecycle events. Resident helpers may use OS integrations such as low-level hooks, so their README should document exact behavior and security implications.
+
+Current resident rpacks:
+
+- `taskbar-volume`: wheel/middle-click volume control over the Windows taskbar.
+- `thorium-tabs`: Alt+mouse tab gestures when Thorium is active.
+
 ## Generate registry locally
 
 ```powershell
@@ -53,7 +60,8 @@ https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/<module>/<file>
 
 1. Create `rpacks/<id>/module.toml`.
 2. Add the entry file and supporting files next to it.
-3. Run `python .\scripts\generate-registry.py`.
-4. Commit the folder and generated `registry.json`.
+3. For resident helpers, place the native helper inside the rpack folder, usually under `bin/`, and declare it with `[resident]`.
+4. Run `python .\scripts\generate-registry.py`.
+5. Commit the folder and generated `registry.json`.
 
 The `Update rMods registry` GitHub Action runs the generator automatically when `modules/**`, `rpacks/**`, `scripts/generate-registry.py`, or the workflow file changes. If generated `registry.json` differs, the action commits it with the GitHub Actions bot. If it is unchanged, the action exits without creating an empty commit.
