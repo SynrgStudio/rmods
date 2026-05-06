@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-06T20:17:09Z",
+  "generated_at": "2026-05-06T20:17:26Z",
   "modules": [
     {
       "id": "calculator",
@@ -31,8 +31,8 @@
       "description": "Pick a screen color and copy it to clipboard.",
       "kind": "rpack",
       "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/color-picker",
-      "sha256": "10b106ad7817dc37e375dc461c5b6c8e142d91445a8933596e94c46f2cda4019",
-      "size": 267216,
+      "sha256": "4e563c8f5da1eaf6eab9587a7c15e7b8ad09621c9c7e3ef2bfa9d3fc8ea6f291",
+      "size": 267208,
       "files": [
         {
           "path": "bin/color-picker.exe",
@@ -51,8 +51,8 @@
         },
         {
           "path": "module.toml",
-          "sha256": "abb2d7540db90a4ee0e1b5b83ea4403278974e2786f8c4807d053bbca14d2ce9",
-          "size": 213
+          "sha256": "3eea1caeac499b70d2b1a1a4b3bbe64ffdc3fa3de32a03f67608d489168f7bb0",
+          "size": 205
         },
         {
           "path": "README.md",
@@ -80,8 +80,8 @@
       "description": "Exact search aliases for launching favorite targets.",
       "kind": "rpack",
       "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/shortcuts",
-      "sha256": "69f7fea3236515451bec3fe95ec4864cff12aedf5f85b3fc7d7ec04c1c13df03",
-      "size": 7792,
+      "sha256": "26605b16a037a25eb4c29df2e55600060d2dd4866b2ad6c5d927df4d5d524126",
+      "size": 7784,
       "files": [
         {
           "path": "config.json",
@@ -95,8 +95,8 @@
         },
         {
           "path": "module.toml",
-          "sha256": "b319f1fd385a25a28be4eb366648af37f4162fa25a0585d2ce34a9fbf8eb23cb",
-          "size": 237
+          "sha256": "669867ea45b7c7492c2d5560fb96acb27c62195d54ff89de4300dea4bed70640",
+          "size": 229
         },
         {
           "path": "README.md",
