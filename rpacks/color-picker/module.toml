@@ -1,0 +1,8 @@
+name = "color-picker"
+version = "0.1.0"
+api_version = "1"
+kind = "script"
+entry = "module.js"
+capabilities = ["input-accessory"]
+priority = 50
+description = "Pick a screen color and copy it to clipboard."

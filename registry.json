@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-06T15:18:18Z",
+  "generated_at": "2026-05-06T15:54:57Z",
   "modules": [
     {
       "id": "calculator",
@@ -22,6 +22,44 @@
       "download_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/chatgpt-open.rmod",
       "sha256": "c9d9cb5914021cfeba1780c810783b3b753c9d004688711c9f0325c58f9d662c",
       "size": 866,
+      "tags": []
+    },
+    {
+      "id": "color-picker",
+      "name": "color-picker",
+      "version": "0.1.0",
+      "description": "Pick a screen color and copy it to clipboard.",
+      "kind": "rpack",
+      "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/color-picker",
+      "sha256": "d7a3fd00e17cd81de1cff3604f9f14125271dabcd22b2589f09b21b82d096610",
+      "size": 186824,
+      "files": [
+        {
+          "path": "bin/color-picker.exe",
+          "sha256": "7f9a77ec1bdd49ab7882e6b30c531452eb71b3795d8a2ce06caf3fe898903efb",
+          "size": 183808
+        },
+        {
+          "path": "config.json",
+          "sha256": "10ac28fda58983be0c52fe72460c9530f84849a3d603492db3c393a14def83bb",
+          "size": 113
+        },
+        {
+          "path": "module.js",
+          "sha256": "4b2c2aea3ea00ce24ec814fb00e17f39617af65bfe301a2e53080f25c8bc3d2b",
+          "size": 2335
+        },
+        {
+          "path": "module.toml",
+          "sha256": "cb78442fc39d4ee0ef1c2c592afaec94a5b2262d39f8126ac93d143aa4345f03",
+          "size": 205
+        },
+        {
+          "path": "README.md",
+          "sha256": "68d813fc56268e42a3d62146b160b509d5b7a6d08142ddce642a5d90da2febe2",
+          "size": 363
+        }
+      ],
       "tags": []
     },
     {

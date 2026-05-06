@@ -1,0 +1,5 @@
+{
+  "defaultFormat": "hex",
+  "aliases": ["color", "cp", "picker", "pick"],
+  "helper": "bin/color-picker.exe"
+}
