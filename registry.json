@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-06T20:17:26Z",
+  "generated_at": "2026-05-06T21:50:31Z",
   "modules": [
     {
       "id": "calculator",
@@ -31,8 +31,8 @@
       "description": "Pick a screen color and copy it to clipboard.",
       "kind": "rpack",
       "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/color-picker",
-      "sha256": "4e563c8f5da1eaf6eab9587a7c15e7b8ad09621c9c7e3ef2bfa9d3fc8ea6f291",
-      "size": 267208,
+      "sha256": "10b106ad7817dc37e375dc461c5b6c8e142d91445a8933596e94c46f2cda4019",
+      "size": 267216,
       "files": [
         {
           "path": "bin/color-picker.exe",
@@ -51,8 +51,8 @@
         },
         {
           "path": "module.toml",
-          "sha256": "3eea1caeac499b70d2b1a1a4b3bbe64ffdc3fa3de32a03f67608d489168f7bb0",
-          "size": 205
+          "sha256": "abb2d7540db90a4ee0e1b5b83ea4403278974e2786f8c4807d053bbca14d2ce9",
+          "size": 213
         },
         {
           "path": "README.md",
@@ -76,12 +76,12 @@
     {
       "id": "shortcuts",
       "name": "shortcuts",
-      "version": "0.3.3",
+      "version": "0.3.4",
       "description": "Exact search aliases for launching favorite targets.",
       "kind": "rpack",
       "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/shortcuts",
-      "sha256": "26605b16a037a25eb4c29df2e55600060d2dd4866b2ad6c5d927df4d5d524126",
-      "size": 7784,
+      "sha256": "5ba4a0b58f4f0a5e3581457c74608c7bfb55852d4dd7c396314152b6fb0ba368",
+      "size": 8550,
       "files": [
         {
           "path": "config.json",
@@ -90,13 +90,13 @@
         },
         {
           "path": "module.js",
-          "sha256": "717630ceed33a5acd987e3da504f6ef80832e5c009e2583d79405e92f113db8c",
-          "size": 7245
+          "sha256": "29b0822c5cc211f37126fcfd388e1ce83b4300bb734f6cfc979988a384950c6b",
+          "size": 8003
         },
         {
           "path": "module.toml",
-          "sha256": "669867ea45b7c7492c2d5560fb96acb27c62195d54ff89de4300dea4bed70640",
-          "size": 229
+          "sha256": "2773e56387ae528e0837f55ee399c7b000daab262aae6f44df6ffa3c62bde5c6",
+          "size": 237
         },
         {
           "path": "README.md",

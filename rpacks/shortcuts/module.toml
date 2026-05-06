@@ -1,5 +1,5 @@
 name = "shortcuts"
-version = "0.3.3"
+version = "0.3.4"
 api_version = "1"
 kind = "script"
 entry = "module.js"

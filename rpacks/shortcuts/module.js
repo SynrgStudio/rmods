@@ -61,6 +61,29 @@ function pendingShortcutPath(ctx) {
   return moduleStoragePath(ctx, PENDING_SHORTCUT_FILE);
 }
 
+function legacyModulePath(ctx, fileName) {
+  const dir = typeof ctx.moduleDir === 'function' ? String(ctx.moduleDir() || '').trim() : '';
+  return dir ? `${dir}/${fileName}` : `modules/shortcuts/${fileName}`;
+}
+
+function migrateLegacyFile(ctx, fileName) {
+  const target = moduleStoragePath(ctx, fileName);
+  if (fs.existsSync(target)) return;
+
+  const legacy = legacyModulePath(ctx, fileName);
+  if (!legacy || legacy === target || !fs.existsSync(legacy)) return;
+
+  try {
+    ensureParentDir(target);
+    fs.copyFileSync(legacy, target);
+  } catch (_) {}
+}
+
+function migrateLegacyStorage(ctx) {
+  migrateLegacyFile(ctx, USER_SHORTCUTS_FILE);
+  migrateLegacyFile(ctx, PENDING_SHORTCUT_FILE);
+}
+
 function writePendingShortcut(shortcut, ctx) {
   pendingShortcutItem = shortcut;
   const path = pendingShortcutPath(ctx);
@@ -71,6 +94,7 @@ function writePendingShortcut(shortcut, ctx) {
 function readPendingShortcut(ctx) {
   if (pendingShortcutItem) return pendingShortcutItem;
   try {
+    migrateLegacyStorage(ctx);
     const path = pendingShortcutPath(ctx);
     if (!fs.existsSync(path)) return null;
     const parsed = JSON.parse(fs.readFileSync(path, 'utf8'));
@@ -89,6 +113,7 @@ function clearPendingShortcut(ctx) {
 
 function readUserShortcuts(ctx) {
   try {
+    migrateLegacyStorage(ctx);
     const path = userShortcutsPath(ctx);
     if (!fs.existsSync(path)) return [];
     const parsed = JSON.parse(fs.readFileSync(path, 'utf8'));
