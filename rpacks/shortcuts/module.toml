@@ -1,0 +1,8 @@
+name = "shortcuts"
+version = "0.3.0"
+api_version = "1"
+kind = "script"
+entry = "module.js"
+capabilities = ["input-accessory", "commands", "keys"]
+priority = 30
+description = "Exact search aliases for launching favorite targets."

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-06T13:49:45Z",
+  "generated_at": "2026-05-06T14:53:14Z",
   "modules": [
     {
       "id": "calculator",
@@ -33,6 +33,39 @@
       "download_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/pi-launcher.rmod",
       "sha256": "6446245fc70fc46cfd529f8101246be899ed98d904dcd353d7857bdc4d2791e6",
       "size": 1836,
+      "tags": []
+    },
+    {
+      "id": "shortcuts",
+      "name": "shortcuts",
+      "version": "0.3.0",
+      "description": "Exact search aliases for launching favorite targets.",
+      "kind": "rpack",
+      "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/shortcuts",
+      "sha256": "09c0834e12ce766770267b3752dc81179b368f5a75794a1d5a52d5439160ce10",
+      "size": 6523,
+      "files": [
+        {
+          "path": "config.json",
+          "sha256": "af58f35498d8773de9245eced0f4f800bb5a4a2d4bab82163033213ff332a779",
+          "size": 25
+        },
+        {
+          "path": "module.js",
+          "sha256": "3a1026d20b249db4294f9d8447ed851053c0b5168692b71da2bc6afe747700ad",
+          "size": 5960
+        },
+        {
+          "path": "module.toml",
+          "sha256": "18175517f358a3f6f057dbe93b0b281f95cb66fdc6b553ce59a0ee6c0ba67869",
+          "size": 237
+        },
+        {
+          "path": "README.md",
+          "sha256": "001c02c04442ceffdafb4687249163418a3b5ff7b926998439d5bc00338ef601",
+          "size": 301
+        }
+      ],
       "tags": []
     },
     {
