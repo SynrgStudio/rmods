@@ -1,5 +1,5 @@
 name = "color-picker"
-version = "0.2.4"
+version = "0.2.5"
 api_version = "1"
 kind = "script"
 entry = "module.js"

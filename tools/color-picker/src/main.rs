@@ -8,15 +8,15 @@ use std::sync::mpsc;
 use std::thread::{self, JoinHandle};
 use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{COLORREF, HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
-use windows::Win32::Graphics::Gdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, CreateSolidBrush, DeleteDC, DeleteObject, FillRect, GetDC, GetPixel, ReleaseDC, SelectObject, SetBkColor, SetStretchBltMode, SetTextColor, StretchBlt, TextOutW, HBITMAP, HDC, HGDIOBJ, SRCCOPY, STRETCH_BLT_MODE};
+use windows::Win32::Graphics::Gdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, CreateSolidBrush, DeleteDC, DeleteObject, FillRect, GetDC, GetMonitorInfoW, GetPixel, MonitorFromPoint, ReleaseDC, SelectObject, SetBkColor, SetStretchBltMode, SetTextColor, StretchBlt, TextOutW, HBITMAP, HDC, HGDIOBJ, MONITORINFO, MONITOR_DEFAULTTONEAREST, SRCCOPY, STRETCH_BLT_MODE};
 use windows::Win32::System::Threading::GetCurrentThreadId;
-use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_ESCAPE};
+use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_ESCAPE, VK_SHIFT};
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetCursorPos, GetSystemMetrics,
-    GetMessageW, LoadCursorW, MessageBoxW, MoveWindow, PeekMessageW, PostThreadMessageW, RegisterClassW, SetCursor,
+    CallNextHookEx, CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetCursorPos, GetMessageW,
+    LoadCursorW, MessageBoxW, MoveWindow, PeekMessageW, PostThreadMessageW, RegisterClassW, SetCursor,
     SetWindowsHookExW, ShowWindow, UnhookWindowsHookEx, CS_HREDRAW, CS_VREDRAW, HHOOK, IDC_CROSS, MB_ICONERROR,
-    MB_OK, MSG, PM_REMOVE, SM_CXSCREEN, SM_CYSCREEN, SW_SHOWNOACTIVATE, WH_MOUSE_LL, WM_LBUTTONDOWN, WM_QUIT,
-    WNDCLASSW, WS_BORDER, WS_EX_TOPMOST, WS_EX_TOOLWINDOW, WS_POPUP,
+    MB_OK, MSG, PM_REMOVE, SW_SHOWNOACTIVATE, WH_MOUSE_LL, WM_LBUTTONDOWN, WM_QUIT, WNDCLASSW, WS_BORDER,
+    WS_EX_TOPMOST, WS_EX_TOOLWINDOW, WS_POPUP,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,6 +31,7 @@ static LEFT_CLICKED: AtomicBool = AtomicBool::new(false);
 
 const WIN_W: i32 = 230;
 const WIN_H: i32 = 170;
+const PRECISION_MULTIPLIER: f64 = 0.08;
 
 struct MouseHookThread {
     thread_id: u32,
@@ -67,6 +68,50 @@ impl Drop for DoubleBuffer {
             let _ = SelectObject(self.mem_dc, self.old_bitmap);
             let _ = DeleteObject(self.bitmap);
             let _ = DeleteDC(self.mem_dc);
+        }
+    }
+}
+
+struct PickerCursorState {
+    virtual_x: f64,
+    virtual_y: f64,
+    last_mouse_x: i32,
+    last_mouse_y: i32,
+    was_shift_down: bool,
+}
+
+impl PickerCursorState {
+    fn new(mouse_x: i32, mouse_y: i32) -> Self {
+        Self {
+            virtual_x: f64::from(mouse_x),
+            virtual_y: f64::from(mouse_y),
+            last_mouse_x: mouse_x,
+            last_mouse_y: mouse_y,
+            was_shift_down: unsafe { key_down(i32::from(VK_SHIFT.0)) },
+        }
+    }
+
+    fn update(&mut self, mouse_x: i32, mouse_y: i32) -> POINT {
+        let shift_down = unsafe { key_down(i32::from(VK_SHIFT.0)) };
+        if shift_down {
+            if !self.was_shift_down {
+                self.virtual_x = f64::from(mouse_x);
+                self.virtual_y = f64::from(mouse_y);
+            }
+            self.virtual_x += f64::from(mouse_x - self.last_mouse_x) * PRECISION_MULTIPLIER;
+            self.virtual_y += f64::from(mouse_y - self.last_mouse_y) * PRECISION_MULTIPLIER;
+        } else {
+            self.virtual_x = f64::from(mouse_x);
+            self.virtual_y = f64::from(mouse_y);
+        }
+
+        self.was_shift_down = shift_down;
+        self.last_mouse_x = mouse_x;
+        self.last_mouse_y = mouse_y;
+
+        POINT {
+            x: self.virtual_x.round() as i32,
+            y: self.virtual_y.round() as i32,
         }
     }
 }
@@ -159,6 +204,10 @@ fn pick_color(format: Format) -> Result<Option<String>, String> {
         SetCursor(cursor);
     }
 
+    let mut initial_point = POINT::default();
+    unsafe { GetCursorPos(&mut initial_point).map_err(|error| error.to_string())? };
+    let mut cursor_state = PickerCursorState::new(initial_point.x, initial_point.y);
+
     loop {
         pump_messages();
         unsafe {
@@ -168,8 +217,18 @@ fn pick_color(format: Format) -> Result<Option<String>, String> {
 
         let mut point = POINT::default();
         unsafe { GetCursorPos(&mut point).map_err(|error| error.to_string())? };
-        let color = sample_screen_pixel(screen_dc, point.x, point.y)?;
-        update_picker_window(window, window_dc, &painter, screen_dc, point.x, point.y, color, format);
+        let virtual_point = cursor_state.update(point.x, point.y);
+        let color = sample_screen_pixel(screen_dc, virtual_point.x, virtual_point.y)?;
+        update_picker_window(
+            window,
+            window_dc,
+            &painter,
+            screen_dc,
+            virtual_point.x,
+            virtual_point.y,
+            color,
+            format,
+        );
 
         if unsafe { key_down(i32::from(VK_ESCAPE.0)) } {
             cleanup_picker(window, window_dc, screen_dc);
@@ -304,21 +363,20 @@ fn update_picker_window(
     color: (u8, u8, u8),
     format: Format,
 ) {
-    let screen_w = unsafe { GetSystemMetrics(SM_CXSCREEN) };
-    let screen_h = unsafe { GetSystemMetrics(SM_CYSCREEN) };
+    let monitor = monitor_rect_for_point(x, y);
     let mut pos_x = x + 25;
     let mut pos_y = y + 25;
-    if pos_x + WIN_W > screen_w {
+    if pos_x + WIN_W > monitor.right {
         pos_x = x - WIN_W - 25;
     }
-    if pos_y + WIN_H > screen_h {
+    if pos_y + WIN_H > monitor.bottom {
         pos_y = y - WIN_H - 25;
     }
-    if pos_x < 0 {
-        pos_x = 0;
+    if pos_x < monitor.left {
+        pos_x = monitor.left;
     }
-    if pos_y < 0 {
-        pos_y = 0;
+    if pos_y < monitor.top {
+        pos_y = monitor.top;
     }
 
     unsafe {
@@ -326,6 +384,20 @@ fn update_picker_window(
         draw_picker(painter.mem_dc, screen_dc, x, y, color, format);
         let _ = BitBlt(window_dc, 0, 0, WIN_W, WIN_H, painter.mem_dc, 0, 0, SRCCOPY);
     }
+}
+
+fn monitor_rect_for_point(x: i32, y: i32) -> RECT {
+    unsafe {
+        let monitor = MonitorFromPoint(POINT { x, y }, MONITOR_DEFAULTTONEAREST);
+        let mut info = MONITORINFO {
+            cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+            ..Default::default()
+        };
+        if GetMonitorInfoW(monitor, &mut info).as_bool() {
+            return info.rcMonitor;
+        }
+    }
+    RECT { left: 0, top: 0, right: 1920, bottom: 1080 }
 }
 
 fn draw_picker(
