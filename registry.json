@@ -1,5 +1,17 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-06T03:59:23Z",
-  "modules": []
+  "generated_at": "2026-05-06T05:22:20Z",
+  "modules": [
+    {
+      "id": "calculator",
+      "name": "calculator",
+      "version": "0.1.0",
+      "description": "Shows simple arithmetic results in the input bar.",
+      "kind": "rmod",
+      "download_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/calculator.rmod",
+      "sha256": "de00cc81828884f32688d344099e8fb2553887d7d30fc652d0b3b1e0f5c7f227",
+      "size": 3021,
+      "tags": []
+    }
+  ]
 }
