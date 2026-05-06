@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-06T15:14:13Z",
+  "generated_at": "2026-05-06T15:17:47Z",
   "modules": [
     {
       "id": "calculator",
@@ -38,12 +38,12 @@
     {
       "id": "shortcuts",
       "name": "shortcuts",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "description": "Exact search aliases for launching favorite targets.",
       "kind": "rpack",
       "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/shortcuts",
-      "sha256": "9f1ad3f900eaac9d4cb7e3c792c8b5a85e4586457a8007edc7065fc16396c2ec",
-      "size": 6634,
+      "sha256": "17b0fd7969c01203048f5c71d3def196d6f7fa15ea52ae70d33f862fa59f0848",
+      "size": 7624,
       "files": [
         {
           "path": "config.json",
@@ -52,12 +52,12 @@
         },
         {
           "path": "module.js",
-          "sha256": "54a442f07a57f999879fbe90fce76246ec17ff0c5ca07300d9990a2cfd982149",
-          "size": 6095
+          "sha256": "679d54c9673c87966968d18b735ec5965f5044bed5d3e08e029bc170e66a9d71",
+          "size": 7085
         },
         {
           "path": "module.toml",
-          "sha256": "7878a02cb75f5c96054c5854d04f6b6f11215108d9a5fc21702f050c906303e5",
+          "sha256": "7370bfe1f6d461afb3ca8537aded64e52a5b3d83acbd48fab7d120e4128bda78",
           "size": 229
         },
         {

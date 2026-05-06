@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 
 const USER_SHORTCUTS_FILE = 'shortcuts.user.json';
+const PENDING_SHORTCUT_FILE = 'shortcuts.pending.json';
 let pendingShortcutItem = null;
 let cachedUserShortcuts = null;
 let cachedConfigShortcuts = null;
@@ -41,9 +42,47 @@ function sanitizeShortcut(shortcut) {
   return normalized;
 }
 
-function userShortcutsPath(ctx) {
+function moduleStoragePath(ctx, fileName) {
   const dir = typeof ctx.moduleDir === 'function' ? String(ctx.moduleDir() || '').trim() : '';
-  return dir ? `${dir}/${USER_SHORTCUTS_FILE}` : `modules/shortcuts/${USER_SHORTCUTS_FILE}`;
+  return dir ? `${dir}/${fileName}` : `modules/shortcuts/${fileName}`;
+}
+
+function ensureParentDir(path) {
+  fs.mkdirSync(path.replace(/[\\/][^\\/]*$/, ''), { recursive: true });
+}
+
+function userShortcutsPath(ctx) {
+  return moduleStoragePath(ctx, USER_SHORTCUTS_FILE);
+}
+
+function pendingShortcutPath(ctx) {
+  return moduleStoragePath(ctx, PENDING_SHORTCUT_FILE);
+}
+
+function writePendingShortcut(shortcut, ctx) {
+  pendingShortcutItem = shortcut;
+  const path = pendingShortcutPath(ctx);
+  ensureParentDir(path);
+  fs.writeFileSync(path, `${JSON.stringify(shortcut, null, 2)}\n`, 'utf8');
+}
+
+function readPendingShortcut(ctx) {
+  if (pendingShortcutItem) return pendingShortcutItem;
+  try {
+    const path = pendingShortcutPath(ctx);
+    if (!fs.existsSync(path)) return null;
+    const parsed = JSON.parse(fs.readFileSync(path, 'utf8'));
+    return itemToPendingShortcut(parsed);
+  } catch (_) {
+    return null;
+  }
+}
+
+function clearPendingShortcut(ctx) {
+  pendingShortcutItem = null;
+  try {
+    fs.unlinkSync(pendingShortcutPath(ctx));
+  } catch (_) {}
 }
 
 function readUserShortcuts(ctx) {
@@ -76,7 +115,7 @@ function saveUserShortcut(shortcut, ctx) {
   });
   next.push(shortcut);
   const path = userShortcutsPath(ctx);
-  fs.mkdirSync(path.replace(/[\\/][^\\/]*$/, ''), { recursive: true });
+  ensureParentDir(path);
   fs.writeFileSync(path, `${JSON.stringify({ shortcuts: next }, null, 2)}\n`, 'utf8');
   cachedUserShortcuts = next;
 }
@@ -163,7 +202,7 @@ export default function createModule() {
         return;
       }
 
-      pendingShortcutItem = pending;
+      writePendingShortcut(pending, ctx);
       ctx.setQuery('/shortcuts::bind ');
       ctx.setInputAccessory({
         text: `binding ${pending.title}: type alias and press Enter`,
@@ -185,7 +224,8 @@ export default function createModule() {
         return;
       }
 
-      if (!pendingShortcutItem) {
+      const pending = readPendingShortcut(ctx);
+      if (!pending) {
         ctx.setInputAccessory({
           text: 'shortcut bind: select an item and press Ctrl+B first',
           kind: 'warning',
@@ -197,16 +237,16 @@ export default function createModule() {
       saveUserShortcut({
         key: '',
         alias,
-        title: pendingShortcutItem.title,
-        target: pendingShortcutItem.target
+        title: pending.title,
+        target: pending.target
       }, ctx);
 
       ctx.setInputAccessory({
-        text: `shortcut added: ${alias} -> ${pendingShortcutItem.title}`,
+        text: `shortcut added: ${alias} -> ${pending.title}`,
         kind: 'success',
         priority: 100
       });
-      pendingShortcutItem = null;
+      clearPendingShortcut(ctx);
     }
   };
 }
