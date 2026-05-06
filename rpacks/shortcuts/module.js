@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-const USER_SHORTCUTS_PATH = 'modules/shortcuts/shortcuts.user.json';
+const USER_SHORTCUTS_FILE = 'shortcuts.user.json';
 let pendingShortcutItem = null;
 let cachedUserShortcuts = null;
 let cachedConfigShortcuts = null;
@@ -41,10 +41,16 @@ function sanitizeShortcut(shortcut) {
   return normalized;
 }
 
-function readUserShortcuts() {
+function userShortcutsPath(ctx) {
+  const dir = typeof ctx.moduleDir === 'function' ? String(ctx.moduleDir() || '').trim() : '';
+  return dir ? `${dir}/${USER_SHORTCUTS_FILE}` : `modules/shortcuts/${USER_SHORTCUTS_FILE}`;
+}
+
+function readUserShortcuts(ctx) {
   try {
-    if (!fs.existsSync(USER_SHORTCUTS_PATH)) return [];
-    const parsed = JSON.parse(fs.readFileSync(USER_SHORTCUTS_PATH, 'utf8'));
+    const path = userShortcutsPath(ctx);
+    if (!fs.existsSync(path)) return [];
+    const parsed = JSON.parse(fs.readFileSync(path, 'utf8'));
     const shortcuts = parsed && Array.isArray(parsed.shortcuts) ? parsed.shortcuts : [];
     return shortcuts.map(sanitizeShortcut).filter(Boolean);
   } catch (_) {
@@ -52,15 +58,15 @@ function readUserShortcuts() {
   }
 }
 
-function loadUserShortcuts() {
+function loadUserShortcuts(ctx) {
   if (!cachedUserShortcuts) {
-    cachedUserShortcuts = readUserShortcuts();
+    cachedUserShortcuts = readUserShortcuts(ctx);
   }
   return cachedUserShortcuts;
 }
 
-function saveUserShortcut(shortcut) {
-  const existing = loadUserShortcuts();
+function saveUserShortcut(shortcut, ctx) {
+  const existing = loadUserShortcuts(ctx);
   const alias = normalize(shortcut.alias);
   const key = normalize(shortcut.key);
   const next = existing.filter((entry) => {
@@ -69,7 +75,9 @@ function saveUserShortcut(shortcut) {
     return true;
   });
   next.push(shortcut);
-  fs.writeFileSync(USER_SHORTCUTS_PATH, `${JSON.stringify({ shortcuts: next }, null, 2)}\n`, 'utf8');
+  const path = userShortcutsPath(ctx);
+  fs.mkdirSync(path.replace(/[\\/][^\\/]*$/, ''), { recursive: true });
+  fs.writeFileSync(path, `${JSON.stringify({ shortcuts: next }, null, 2)}\n`, 'utf8');
   cachedUserShortcuts = next;
 }
 
@@ -83,7 +91,7 @@ function loadConfigShortcuts(ctx) {
 }
 
 function loadShortcuts(ctx) {
-  return loadConfigShortcuts(ctx).concat(loadUserShortcuts());
+  return loadConfigShortcuts(ctx).concat(loadUserShortcuts(ctx));
 }
 
 function matchesShortcut(input, shortcut) {
@@ -191,7 +199,7 @@ export default function createModule() {
         alias,
         title: pendingShortcutItem.title,
         target: pendingShortcutItem.target
-      });
+      }, ctx);
 
       ctx.setInputAccessory({
         text: `shortcut added: ${alias} -> ${pendingShortcutItem.title}`,
