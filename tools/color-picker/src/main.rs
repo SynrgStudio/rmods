@@ -3,15 +3,17 @@
 use std::env;
 use std::ffi::c_void;
 use std::ptr::null_mut;
+use std::sync::atomic::{AtomicBool, Ordering};
 use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{COLORREF, HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
-use windows::Win32::Graphics::Gdi::{CreateCompatibleDC, CreateCompatibleBitmap, CreateSolidBrush, DeleteDC, DeleteObject, FillRect, GetDC, GetPixel, ReleaseDC, SelectObject, SetBkColor, SetStretchBltMode, SetTextColor, StretchBlt, TextOutW, BitBlt, SRCCOPY, STRETCH_BLT_MODE};
-use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_ESCAPE, VK_LBUTTON};
+use windows::Win32::Graphics::Gdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, CreateSolidBrush, DeleteDC, DeleteObject, FillRect, GetDC, GetPixel, ReleaseDC, SelectObject, SetBkColor, SetStretchBltMode, SetTextColor, StretchBlt, TextOutW, HDC, SRCCOPY, STRETCH_BLT_MODE};
+use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_ESCAPE};
 use windows::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetCursorPos, GetSystemMetrics, LoadCursorW,
-    MessageBoxW, MoveWindow, PeekMessageW, RegisterClassW, SetCursor, ShowWindow, CS_HREDRAW, CS_VREDRAW,
-    IDC_CROSS, MB_ICONERROR, MB_OK, MSG, PM_REMOVE, SM_CXSCREEN, SM_CYSCREEN, SW_SHOWNOACTIVATE, WNDCLASSW,
-    WS_BORDER, WS_EX_TOPMOST, WS_EX_TOOLWINDOW, WS_POPUP,
+    CallNextHookEx, CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetCursorPos, GetSystemMetrics,
+    LoadCursorW, MessageBoxW, MoveWindow, PeekMessageW, RegisterClassW, SetCursor, SetWindowsHookExW, ShowWindow,
+    UnhookWindowsHookEx, CS_HREDRAW, CS_VREDRAW, HHOOK, IDC_CROSS, MB_ICONERROR, MB_OK, MSG, PM_REMOVE, SM_CXSCREEN,
+    SM_CYSCREEN, SW_SHOWNOACTIVATE, WH_MOUSE_LL, WM_LBUTTONDOWN, WNDCLASSW, WS_BORDER, WS_EX_TOPMOST,
+    WS_EX_TOOLWINDOW, WS_POPUP,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -21,6 +23,8 @@ enum Format {
     Hsl,
     All,
 }
+
+static LEFT_CLICKED: AtomicBool = AtomicBool::new(false);
 
 fn main() {
     let format = parse_format();
@@ -74,13 +78,22 @@ fn pick_color(format: Format) -> Result<Option<String>, String> {
         }
         return Err("GetDC(window) failed".to_string());
     }
+    let mouse_hook = unsafe { SetWindowsHookExW(WH_MOUSE_LL, Some(mouse_hook_proc), HINSTANCE::default(), 0) }
+        .map_err(|error| {
+            unsafe {
+                let _ = ReleaseDC(window, window_dc);
+                let _ = ReleaseDC(None, screen_dc);
+                let _ = DestroyWindow(window);
+            }
+            error.to_string()
+        })?;
+
     unsafe {
         SetStretchBltMode(window_dc, STRETCH_BLT_MODE(1));
         let cursor = LoadCursorW(None, IDC_CROSS).map_err(|error| error.to_string())?;
         SetCursor(cursor);
     }
 
-    let mut was_left_down = unsafe { key_down(i32::from(VK_LBUTTON.0)) };
     loop {
         pump_messages();
         unsafe {
@@ -94,30 +107,37 @@ fn pick_color(format: Format) -> Result<Option<String>, String> {
         update_picker_window(window, window_dc, screen_dc, point.x, point.y, color, format);
 
         if unsafe { key_down(i32::from(VK_ESCAPE.0)) } {
-            unsafe {
-                let _ = ReleaseDC(window, window_dc);
-                let _ = ReleaseDC(None, screen_dc);
-                let _ = DestroyWindow(window);
-            }
+            cleanup_picker(window, window_dc, screen_dc, mouse_hook);
             return Ok(None);
         }
 
-        let left_down = unsafe { key_down(i32::from(VK_LBUTTON.0)) };
-        if left_down && !was_left_down {
-            unsafe {
-                let _ = ReleaseDC(window, window_dc);
-                let _ = ReleaseDC(None, screen_dc);
-                let _ = DestroyWindow(window);
-            }
+        if LEFT_CLICKED.swap(false, Ordering::SeqCst) {
+            cleanup_picker(window, window_dc, screen_dc, mouse_hook);
             return Ok(Some(format_color(color, format)));
         }
-        was_left_down = left_down;
         std::thread::sleep(std::time::Duration::from_millis(16));
     }
 }
 
 unsafe fn key_down(vk: i32) -> bool {
     (GetAsyncKeyState(vk) as u16 & 0x8000) != 0
+}
+
+unsafe extern "system" fn mouse_hook_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+    if code >= 0 && wparam.0 == WM_LBUTTONDOWN as usize {
+        LEFT_CLICKED.store(true, Ordering::SeqCst);
+        return LRESULT(1);
+    }
+    unsafe { CallNextHookEx(HHOOK::default(), code, wparam, lparam) }
+}
+
+fn cleanup_picker(window: HWND, window_dc: HDC, screen_dc: HDC, mouse_hook: HHOOK) {
+    unsafe {
+        let _ = UnhookWindowsHookEx(mouse_hook);
+        let _ = ReleaseDC(window, window_dc);
+        let _ = ReleaseDC(None, screen_dc);
+        let _ = DestroyWindow(window);
+    }
 }
 
 fn sample_screen_pixel(x: i32, y: i32) -> Result<(u8, u8, u8), String> {
