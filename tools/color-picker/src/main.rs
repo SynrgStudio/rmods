@@ -8,7 +8,7 @@ use std::sync::mpsc;
 use std::thread::{self, JoinHandle};
 use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{COLORREF, HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
-use windows::Win32::Graphics::Gdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, CreateSolidBrush, DeleteDC, DeleteObject, FillRect, GetDC, GetPixel, ReleaseDC, SelectObject, SetBkColor, SetStretchBltMode, SetTextColor, StretchBlt, TextOutW, HDC, SRCCOPY, STRETCH_BLT_MODE};
+use windows::Win32::Graphics::Gdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, CreateSolidBrush, DeleteDC, DeleteObject, FillRect, GetDC, GetPixel, ReleaseDC, SelectObject, SetBkColor, SetStretchBltMode, SetTextColor, StretchBlt, TextOutW, HBITMAP, HDC, HGDIOBJ, SRCCOPY, STRETCH_BLT_MODE};
 use windows::Win32::System::Threading::GetCurrentThreadId;
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_ESCAPE};
 use windows::Win32::UI::WindowsAndMessaging::{
@@ -29,9 +29,46 @@ enum Format {
 
 static LEFT_CLICKED: AtomicBool = AtomicBool::new(false);
 
+const WIN_W: i32 = 230;
+const WIN_H: i32 = 170;
+
 struct MouseHookThread {
     thread_id: u32,
     handle: Option<JoinHandle<()>>,
+}
+
+struct DoubleBuffer {
+    mem_dc: HDC,
+    bitmap: HBITMAP,
+    old_bitmap: HGDIOBJ,
+}
+
+impl DoubleBuffer {
+    fn new(window_dc: HDC) -> Result<Self, String> {
+        unsafe {
+            let mem_dc = CreateCompatibleDC(window_dc);
+            if mem_dc.is_invalid() {
+                return Err("CreateCompatibleDC failed".to_string());
+            }
+            let bitmap = CreateCompatibleBitmap(window_dc, WIN_W, WIN_H);
+            if bitmap.is_invalid() {
+                let _ = DeleteDC(mem_dc);
+                return Err("CreateCompatibleBitmap failed".to_string());
+            }
+            let old_bitmap = SelectObject(mem_dc, bitmap);
+            Ok(Self { mem_dc, bitmap, old_bitmap })
+        }
+    }
+}
+
+impl Drop for DoubleBuffer {
+    fn drop(&mut self) {
+        unsafe {
+            let _ = SelectObject(self.mem_dc, self.old_bitmap);
+            let _ = DeleteObject(self.bitmap);
+            let _ = DeleteDC(self.mem_dc);
+        }
+    }
 }
 
 impl Drop for MouseHookThread {
@@ -106,8 +143,18 @@ fn pick_color(format: Format) -> Result<Option<String>, String> {
         error
     })?;
 
+    let painter = match DoubleBuffer::new(window_dc) {
+        Ok(painter) => painter,
+        Err(error) => {
+            cleanup_picker(window, window_dc, screen_dc);
+            drop(mouse_hook);
+            return Err(error);
+        }
+    };
+
     unsafe {
         SetStretchBltMode(window_dc, STRETCH_BLT_MODE(1));
+        SetStretchBltMode(painter.mem_dc, STRETCH_BLT_MODE(1));
         let cursor = LoadCursorW(None, IDC_CROSS).map_err(|error| error.to_string())?;
         SetCursor(cursor);
     }
@@ -121,8 +168,8 @@ fn pick_color(format: Format) -> Result<Option<String>, String> {
 
         let mut point = POINT::default();
         unsafe { GetCursorPos(&mut point).map_err(|error| error.to_string())? };
-        let color = sample_screen_pixel(point.x, point.y)?;
-        update_picker_window(window, window_dc, screen_dc, point.x, point.y, color, format);
+        let color = sample_screen_pixel(screen_dc, point.x, point.y)?;
+        update_picker_window(window, window_dc, &painter, screen_dc, point.x, point.y, color, format);
 
         if unsafe { key_down(i32::from(VK_ESCAPE.0)) } {
             cleanup_picker(window, window_dc, screen_dc);
@@ -135,7 +182,7 @@ fn pick_color(format: Format) -> Result<Option<String>, String> {
             drop(mouse_hook);
             return Ok(Some(format_color(color, format)));
         }
-        std::thread::sleep(std::time::Duration::from_millis(16));
+        std::thread::sleep(std::time::Duration::from_millis(8));
     }
 }
 
@@ -188,14 +235,9 @@ fn cleanup_picker(window: HWND, window_dc: HDC, screen_dc: HDC) {
     }
 }
 
-fn sample_screen_pixel(x: i32, y: i32) -> Result<(u8, u8, u8), String> {
+fn sample_screen_pixel(screen_dc: HDC, x: i32, y: i32) -> Result<(u8, u8, u8), String> {
     unsafe {
-        let dc = GetDC(None);
-        if dc.is_invalid() {
-            return Err("GetDC failed".to_string());
-        }
-        let raw = GetPixel(dc, x, y);
-        let _ = ReleaseDC(None, dc);
+        let raw = GetPixel(screen_dc, x, y);
         if raw == COLORREF(0xFFFF_FFFF) {
             return Err("GetPixel failed".to_string());
         }
@@ -254,15 +296,14 @@ fn copy_to_clipboard(value: &str) -> Result<(), String> {
 
 fn update_picker_window(
     hwnd: HWND,
-    window_dc: windows::Win32::Graphics::Gdi::HDC,
-    screen_dc: windows::Win32::Graphics::Gdi::HDC,
+    window_dc: HDC,
+    painter: &DoubleBuffer,
+    screen_dc: HDC,
     x: i32,
     y: i32,
     color: (u8, u8, u8),
     format: Format,
 ) {
-    const WIN_W: i32 = 230;
-    const WIN_H: i32 = 170;
     let screen_w = unsafe { GetSystemMetrics(SM_CXSCREEN) };
     let screen_h = unsafe { GetSystemMetrics(SM_CYSCREEN) };
     let mut pos_x = x + 25;
@@ -282,27 +323,19 @@ fn update_picker_window(
 
     unsafe {
         let _ = MoveWindow(hwnd, pos_x, pos_y, WIN_W, WIN_H, false);
-        let mem_dc = CreateCompatibleDC(window_dc);
-        let bitmap = CreateCompatibleBitmap(window_dc, WIN_W, WIN_H);
-        let old_bitmap = SelectObject(mem_dc, bitmap);
-        draw_picker(mem_dc, screen_dc, x, y, color, format);
-        let _ = BitBlt(window_dc, 0, 0, WIN_W, WIN_H, mem_dc, 0, 0, SRCCOPY);
-        let _ = SelectObject(mem_dc, old_bitmap);
-        let _ = DeleteObject(bitmap);
-        let _ = DeleteDC(mem_dc);
+        draw_picker(painter.mem_dc, screen_dc, x, y, color, format);
+        let _ = BitBlt(window_dc, 0, 0, WIN_W, WIN_H, painter.mem_dc, 0, 0, SRCCOPY);
     }
 }
 
 fn draw_picker(
-    hdc: windows::Win32::Graphics::Gdi::HDC,
-    screen_dc: windows::Win32::Graphics::Gdi::HDC,
+    hdc: HDC,
+    screen_dc: HDC,
     x: i32,
     y: i32,
     color: (u8, u8, u8),
     format: Format,
 ) {
-    const WIN_W: i32 = 230;
-    const WIN_H: i32 = 170;
     unsafe {
         let bg = CreateSolidBrush(COLORREF(0x00111111));
         let _ = FillRect(hdc, &RECT { left: 0, top: 0, right: WIN_W, bottom: WIN_H }, bg);
