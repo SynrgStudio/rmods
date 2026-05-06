@@ -4,16 +4,19 @@ use std::env;
 use std::ffi::c_void;
 use std::ptr::null_mut;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc;
+use std::thread::{self, JoinHandle};
 use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{COLORREF, HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Gdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, CreateSolidBrush, DeleteDC, DeleteObject, FillRect, GetDC, GetPixel, ReleaseDC, SelectObject, SetBkColor, SetStretchBltMode, SetTextColor, StretchBlt, TextOutW, HDC, SRCCOPY, STRETCH_BLT_MODE};
+use windows::Win32::System::Threading::GetCurrentThreadId;
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_ESCAPE};
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetCursorPos, GetSystemMetrics,
-    LoadCursorW, MessageBoxW, MoveWindow, PeekMessageW, RegisterClassW, SetCursor, SetWindowsHookExW, ShowWindow,
-    UnhookWindowsHookEx, CS_HREDRAW, CS_VREDRAW, HHOOK, IDC_CROSS, MB_ICONERROR, MB_OK, MSG, PM_REMOVE, SM_CXSCREEN,
-    SM_CYSCREEN, SW_SHOWNOACTIVATE, WH_MOUSE_LL, WM_LBUTTONDOWN, WNDCLASSW, WS_BORDER, WS_EX_TOPMOST,
-    WS_EX_TOOLWINDOW, WS_POPUP,
+    GetMessageW, LoadCursorW, MessageBoxW, MoveWindow, PeekMessageW, PostThreadMessageW, RegisterClassW, SetCursor,
+    SetWindowsHookExW, ShowWindow, UnhookWindowsHookEx, CS_HREDRAW, CS_VREDRAW, HHOOK, IDC_CROSS, MB_ICONERROR,
+    MB_OK, MSG, PM_REMOVE, SM_CXSCREEN, SM_CYSCREEN, SW_SHOWNOACTIVATE, WH_MOUSE_LL, WM_LBUTTONDOWN, WM_QUIT,
+    WNDCLASSW, WS_BORDER, WS_EX_TOPMOST, WS_EX_TOOLWINDOW, WS_POPUP,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -25,6 +28,22 @@ enum Format {
 }
 
 static LEFT_CLICKED: AtomicBool = AtomicBool::new(false);
+
+struct MouseHookThread {
+    thread_id: u32,
+    handle: Option<JoinHandle<()>>,
+}
+
+impl Drop for MouseHookThread {
+    fn drop(&mut self) {
+        unsafe {
+            let _ = PostThreadMessageW(self.thread_id, WM_QUIT, WPARAM(0), LPARAM(0));
+        }
+        if let Some(handle) = self.handle.take() {
+            let _ = handle.join();
+        }
+    }
+}
 
 fn main() {
     let format = parse_format();
@@ -78,15 +97,14 @@ fn pick_color(format: Format) -> Result<Option<String>, String> {
         }
         return Err("GetDC(window) failed".to_string());
     }
-    let mouse_hook = unsafe { SetWindowsHookExW(WH_MOUSE_LL, Some(mouse_hook_proc), HINSTANCE::default(), 0) }
-        .map_err(|error| {
-            unsafe {
-                let _ = ReleaseDC(window, window_dc);
-                let _ = ReleaseDC(None, screen_dc);
-                let _ = DestroyWindow(window);
-            }
-            error.to_string()
-        })?;
+    let mouse_hook = start_mouse_hook_thread().map_err(|error| {
+        unsafe {
+            let _ = ReleaseDC(window, window_dc);
+            let _ = ReleaseDC(None, screen_dc);
+            let _ = DestroyWindow(window);
+        }
+        error
+    })?;
 
     unsafe {
         SetStretchBltMode(window_dc, STRETCH_BLT_MODE(1));
@@ -107,12 +125,14 @@ fn pick_color(format: Format) -> Result<Option<String>, String> {
         update_picker_window(window, window_dc, screen_dc, point.x, point.y, color, format);
 
         if unsafe { key_down(i32::from(VK_ESCAPE.0)) } {
-            cleanup_picker(window, window_dc, screen_dc, mouse_hook);
+            cleanup_picker(window, window_dc, screen_dc);
+            drop(mouse_hook);
             return Ok(None);
         }
 
         if LEFT_CLICKED.swap(false, Ordering::SeqCst) {
-            cleanup_picker(window, window_dc, screen_dc, mouse_hook);
+            cleanup_picker(window, window_dc, screen_dc);
+            drop(mouse_hook);
             return Ok(Some(format_color(color, format)));
         }
         std::thread::sleep(std::time::Duration::from_millis(16));
@@ -131,9 +151,37 @@ unsafe extern "system" fn mouse_hook_proc(code: i32, wparam: WPARAM, lparam: LPA
     unsafe { CallNextHookEx(HHOOK::default(), code, wparam, lparam) }
 }
 
-fn cleanup_picker(window: HWND, window_dc: HDC, screen_dc: HDC, mouse_hook: HHOOK) {
+fn start_mouse_hook_thread() -> Result<MouseHookThread, String> {
+    let (sender, receiver) = mpsc::channel::<Result<u32, String>>();
+    let handle = thread::spawn(move || {
+        let thread_id = unsafe { GetCurrentThreadId() };
+        let hook = match unsafe { SetWindowsHookExW(WH_MOUSE_LL, Some(mouse_hook_proc), HINSTANCE::default(), 0) } {
+            Ok(hook) => hook,
+            Err(error) => {
+                let _ = sender.send(Err(error.to_string()));
+                return;
+            }
+        };
+        let _ = sender.send(Ok(thread_id));
+
+        unsafe {
+            let mut msg = MSG::default();
+            while GetMessageW(&mut msg, None, 0, 0).as_bool() {}
+            let _ = UnhookWindowsHookEx(hook);
+        }
+    });
+
+    match receiver.recv().map_err(|error| error.to_string())? {
+        Ok(thread_id) => Ok(MouseHookThread { thread_id, handle: Some(handle) }),
+        Err(error) => {
+            let _ = handle.join();
+            Err(error)
+        }
+    }
+}
+
+fn cleanup_picker(window: HWND, window_dc: HDC, screen_dc: HDC) {
     unsafe {
-        let _ = UnhookWindowsHookEx(mouse_hook);
         let _ = ReleaseDC(window, window_dc);
         let _ = ReleaseDC(None, screen_dc);
         let _ = DestroyWindow(window);
