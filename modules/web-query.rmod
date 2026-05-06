@@ -1,0 +1,69 @@
+#!rmod/v1
+name: web-query
+version: 0.1.0
+api_version: 1
+kind: script
+capabilities: input-accessory
+priority: 40
+description: Explicit Google and YouTube query launcher.
+
+---module.js---
+function item(id, title, subtitle, target, badge) {
+  return {
+    id,
+    title,
+    subtitle,
+    source: 'web-query',
+    target,
+    badge,
+    hint: target
+  };
+}
+
+function queryUrl(engine, query) {
+  const encoded = encodeURIComponent(query.trim());
+  if (engine === 'google') return `https://www.google.com/search?q=${encoded}`;
+  if (engine === 'youtube') return `https://www.youtube.com/results?search_query=${encoded}`;
+  return '';
+}
+
+export default function createModule() {
+  return {
+    onQueryChange(query, ctx) {
+      const raw = String(query || '').trim();
+      const lower = raw.toLowerCase();
+      let engine = '';
+      let term = '';
+
+      if (lower.startsWith('g ')) {
+        engine = 'google';
+        term = raw.slice(2).trim();
+      } else if (lower.startsWith('y ')) {
+        engine = 'youtube';
+        term = raw.slice(2).trim();
+      } else {
+        ctx.clearInputAccessory();
+        return;
+      }
+
+      if (!term) {
+        ctx.setInputAccessory({ text: `${engine}: missing query`, kind: 'hint', priority: 70 });
+        ctx.replaceItems([]);
+        return;
+      }
+
+      const target = queryUrl(engine, term);
+      const title = engine === 'google' ? `Google: ${term}` : `YouTube: ${term}`;
+      ctx.setInputAccessory({ text: `${engine} search`, kind: 'info', priority: 80 });
+      ctx.replaceItems([item(`web-query::${engine}`, title, 'web search', target, engine === 'google' ? 'g' : 'y')]);
+    }
+  };
+}
+
+---readme.md---
+# web-query
+
+Explicit web query intents:
+
+- `g <query>` opens Google search.
+- `y <query>` opens YouTube search.

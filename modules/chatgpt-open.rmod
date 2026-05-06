@@ -1,0 +1,39 @@
+#!rmod/v1
+name: chatgpt-open
+version: 0.1.0
+api_version: 1
+kind: script
+capabilities: input-accessory
+priority: 42
+description: Exact aliases for opening ChatGPT.
+
+---module.js---
+const TARGET = 'https://chatgpt.com';
+
+export default function createModule() {
+  return {
+    onQueryChange(query, ctx) {
+      const raw = String(query || '').trim().toLowerCase();
+      if (raw !== 'chatgpt' && raw !== 'gpt') {
+        ctx.clearInputAccessory();
+        return;
+      }
+
+      ctx.setInputAccessory({ text: 'open ChatGPT', kind: 'info', priority: 80 });
+      ctx.replaceItems([{
+        id: 'chatgpt-open::open',
+        title: 'Open ChatGPT',
+        subtitle: TARGET,
+        source: 'chatgpt-open',
+        target: TARGET,
+        badge: raw,
+        hint: TARGET
+      }]);
+    }
+  };
+}
+
+---readme.md---
+# chatgpt-open
+
+Type `chatgpt` or `gpt` to open ChatGPT.

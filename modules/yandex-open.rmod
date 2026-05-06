@@ -1,0 +1,39 @@
+#!rmod/v1
+name: yandex-open
+version: 0.1.0
+api_version: 1
+kind: script
+capabilities: input-accessory
+priority: 43
+description: Exact alias for opening Yandex.
+
+---module.js---
+const TARGET = 'https://ya.ru';
+
+export default function createModule() {
+  return {
+    onQueryChange(query, ctx) {
+      const raw = String(query || '').trim().toLowerCase();
+      if (raw !== 'ya') {
+        ctx.clearInputAccessory();
+        return;
+      }
+
+      ctx.setInputAccessory({ text: 'open Yandex', kind: 'info', priority: 80 });
+      ctx.replaceItems([{
+        id: 'yandex-open::open',
+        title: 'Open Yandex',
+        subtitle: TARGET,
+        source: 'yandex-open',
+        target: TARGET,
+        badge: 'ya',
+        hint: TARGET
+      }]);
+    }
+  };
+}
+
+---readme.md---
+# yandex-open
+
+Type `ya` to open Yandex.

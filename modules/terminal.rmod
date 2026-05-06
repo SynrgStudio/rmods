@@ -1,0 +1,59 @@
+#!rmod/v1
+name: terminal
+version: 0.1.0
+api_version: 1
+kind: script
+capabilities: input-accessory
+priority: 44
+description: Open Windows Terminal normally or elevated.
+
+---module.js---
+function normalize(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function configValue(ctx, key, fallback) {
+  const config = typeof ctx.moduleConfig === 'function' ? ctx.moduleConfig() : null;
+  const value = config && typeof config[key] === 'string' ? config[key].trim() : '';
+  return value || fallback;
+}
+
+export default function createModule() {
+  return {
+    onQueryChange(query, ctx) {
+      const raw = normalize(query);
+      const normalAliases = new Set(['ter', 'terminal']);
+      const adminAliases = new Set(['ater', 'aterminal']);
+      const isNormal = normalAliases.has(raw);
+      const isAdmin = adminAliases.has(raw);
+      if (!isNormal && !isAdmin) {
+        ctx.clearInputAccessory();
+        return;
+      }
+
+      const terminal = configValue(ctx, 'terminal', 'wt.exe');
+      const target = isAdmin ? `runas:${terminal}` : terminal;
+      ctx.setInputAccessory({ text: isAdmin ? 'open terminal as admin' : 'open terminal', kind: 'info', priority: 80 });
+      ctx.replaceItems([{
+        id: isAdmin ? 'terminal::admin' : 'terminal::open',
+        title: isAdmin ? 'Open Terminal as admin' : 'Open Terminal',
+        subtitle: terminal,
+        source: 'terminal',
+        target,
+        badge: raw,
+        hint: target
+      }]);
+    }
+  };
+}
+
+---config.json---
+{
+  "terminal": "wt.exe"
+}
+
+---readme.md---
+# terminal
+
+- `ter` / `terminal` opens Windows Terminal.
+- `ater` / `aterminal` opens Windows Terminal with `runas:`.

@@ -1,0 +1,51 @@
+#!rmod/v1
+name: url-open
+version: 0.1.0
+api_version: 1
+kind: script
+capabilities: input-accessory
+priority: 41
+description: Explicit URL opener for the w prefix.
+
+---module.js---
+function normalizeUrl(value) {
+  const url = String(value || '').trim();
+  if (/^(https?|ftp):\/\//i.test(url)) return url;
+  return `https://${url}`;
+}
+
+export default function createModule() {
+  return {
+    onQueryChange(query, ctx) {
+      const raw = String(query || '').trim();
+      if (!raw.toLowerCase().startsWith('w ')) {
+        ctx.clearInputAccessory();
+        return;
+      }
+
+      const value = raw.slice(2).trim();
+      if (!value) {
+        ctx.setInputAccessory({ text: 'url: missing target', kind: 'hint', priority: 70 });
+        ctx.replaceItems([]);
+        return;
+      }
+
+      const target = normalizeUrl(value);
+      ctx.setInputAccessory({ text: 'open url', kind: 'info', priority: 80 });
+      ctx.replaceItems([{
+        id: 'url-open::open',
+        title: `Open URL: ${value}`,
+        subtitle: target,
+        source: 'url-open',
+        target,
+        badge: 'w',
+        hint: target
+      }]);
+    }
+  };
+}
+
+---readme.md---
+# url-open
+
+Type `w <url>` to normalize and open a URL.

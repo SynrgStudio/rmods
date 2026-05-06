@@ -1,0 +1,66 @@
+#!rmod/v1
+name: pi-launcher
+version: 0.1.0
+api_version: 1
+kind: script
+capabilities: input-accessory
+priority: 45
+description: Open Pi in Windows Terminal normally or elevated.
+
+---module.js---
+function normalize(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function moduleConfig(ctx) {
+  return typeof ctx.moduleConfig === 'function' && ctx.moduleConfig() ? ctx.moduleConfig() : {};
+}
+
+function configValue(config, key, fallback) {
+  const value = typeof config[key] === 'string' ? config[key].trim() : '';
+  return value || fallback;
+}
+
+export default function createModule() {
+  return {
+    onQueryChange(query, ctx) {
+      const raw = normalize(query);
+      if (raw !== 'pi' && raw !== 'api') {
+        ctx.clearInputAccessory();
+        return;
+      }
+
+      const config = moduleConfig(ctx);
+      const terminal = configValue(config, 'terminal', 'wt.exe');
+      const shell = configValue(config, 'shell', 'powershell');
+      const piCommand = configValue(config, 'piCommand', 'pi');
+      const args = `${shell} -NoExit -Command ${piCommand}`;
+      const launchTarget = `${terminal} ${args}`;
+      const target = raw === 'api' ? `runas:${launchTarget}` : launchTarget;
+
+      ctx.setInputAccessory({ text: raw === 'api' ? 'open pi as admin' : 'open pi', kind: 'info', priority: 80 });
+      ctx.replaceItems([{
+        id: raw === 'api' ? 'pi-launcher::admin' : 'pi-launcher::open',
+        title: raw === 'api' ? 'Open Pi as admin' : 'Open Pi',
+        subtitle: launchTarget,
+        source: 'pi-launcher',
+        target,
+        badge: raw,
+        hint: target
+      }]);
+    }
+  };
+}
+
+---config.json---
+{
+  "terminal": "wt.exe",
+  "shell": "powershell",
+  "piCommand": "pi"
+}
+
+---readme.md---
+# pi-launcher
+
+- `pi` opens Pi in Windows Terminal.
+- `api` opens Pi in Windows Terminal with `runas:`.

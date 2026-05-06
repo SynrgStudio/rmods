@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-06T05:28:40Z",
+  "generated_at": "2026-05-06T13:49:24Z",
   "modules": [
     {
       "id": "calculator",
@@ -11,6 +11,72 @@
       "download_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/calculator.rmod",
       "sha256": "de00cc81828884f32688d344099e8fb2553887d7d30fc652d0b3b1e0f5c7f227",
       "size": 3021,
+      "tags": []
+    },
+    {
+      "id": "chatgpt-open",
+      "name": "chatgpt-open",
+      "version": "0.1.0",
+      "description": "Exact aliases for opening ChatGPT.",
+      "kind": "rmod",
+      "download_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/chatgpt-open.rmod",
+      "sha256": "c9d9cb5914021cfeba1780c810783b3b753c9d004688711c9f0325c58f9d662c",
+      "size": 866,
+      "tags": []
+    },
+    {
+      "id": "pi-launcher",
+      "name": "pi-launcher",
+      "version": "0.1.0",
+      "description": "Open Pi in Windows Terminal normally or elevated.",
+      "kind": "rmod",
+      "download_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/pi-launcher.rmod",
+      "sha256": "6446245fc70fc46cfd529f8101246be899ed98d904dcd353d7857bdc4d2791e6",
+      "size": 1836,
+      "tags": []
+    },
+    {
+      "id": "terminal",
+      "name": "terminal",
+      "version": "0.1.0",
+      "description": "Open Windows Terminal normally or elevated.",
+      "kind": "rmod",
+      "download_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/terminal.rmod",
+      "sha256": "5a6aae8b9496578bdb4fcf121281259f5fa792f6cbd8c2d47a491b8a0f6fc415",
+      "size": 1655,
+      "tags": []
+    },
+    {
+      "id": "url-open",
+      "name": "url-open",
+      "version": "0.1.0",
+      "description": "Explicit URL opener for the w prefix.",
+      "kind": "rmod",
+      "download_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/url-open.rmod",
+      "sha256": "1442a55f96fc09779e1f1167b43bd42a87127376c5be5fac9c18ca85988edfe0",
+      "size": 1202,
+      "tags": []
+    },
+    {
+      "id": "web-query",
+      "name": "web-query",
+      "version": "0.1.0",
+      "description": "Explicit Google and YouTube query launcher.",
+      "kind": "rmod",
+      "download_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/web-query.rmod",
+      "sha256": "37d7a1b03012696f890753af372173b5bb222e762f1dd47631cdf95efad89fba",
+      "size": 1773,
+      "tags": []
+    },
+    {
+      "id": "yandex-open",
+      "name": "yandex-open",
+      "version": "0.1.0",
+      "description": "Exact alias for opening Yandex.",
+      "kind": "rmod",
+      "download_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/yandex-open.rmod",
+      "sha256": "54a3b7bcc64b5ed05a289826505cff053ca943c2a7bfe03a6734a3995df93275",
+      "size": 815,
       "tags": []
     }
   ]
