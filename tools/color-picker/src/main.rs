@@ -2,13 +2,10 @@
 
 use std::env;
 use std::ffi::c_void;
-use std::mem::size_of;
 use std::ptr::null_mut;
 use windows::core::{w, PCWSTR};
-use windows::Win32::Foundation::{COLORREF, HANDLE, HINSTANCE, HWND, LPARAM, LRESULT, POINT, WPARAM};
+use windows::Win32::Foundation::{COLORREF, HINSTANCE, HWND, LPARAM, LRESULT, POINT, WPARAM};
 use windows::Win32::Graphics::Gdi::{GetDC, GetPixel, ReleaseDC};
-use windows::Win32::System::DataExchange::{CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData};
-use windows::Win32::System::Memory::{GlobalAlloc, GlobalLock, GlobalUnlock, GMEM_MOVEABLE};
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_ESCAPE, VK_LBUTTON};
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetCursorPos, LoadCursorW,
@@ -158,29 +155,10 @@ fn rgb_to_hsl(r: u8, g: u8, b: u8) -> (f64, f64, f64) {
 }
 
 fn copy_to_clipboard(value: &str) -> Result<(), String> {
-    let mut wide = value.encode_utf16().collect::<Vec<_>>();
-    wide.push(0);
-    let bytes = wide.len() * size_of::<u16>();
-    unsafe {
-        let handle = GlobalAlloc(GMEM_MOVEABLE, bytes).map_err(|error| error.to_string())?;
-        let ptr = GlobalLock(handle) as *mut u16;
-        if ptr.is_null() {
-            return Err("GlobalLock failed".to_string());
-        }
-        ptr.copy_from_nonoverlapping(wide.as_ptr(), wide.len());
-        let _ = GlobalUnlock(handle);
-        OpenClipboard(None).map_err(|error| error.to_string())?;
-        EmptyClipboard().map_err(|error| {
-            let _ = CloseClipboard();
-            error.to_string()
-        })?;
-        SetClipboardData(13, HANDLE(handle.0)).map_err(|error| {
-            let _ = CloseClipboard();
-            error.to_string()
-        })?;
-        CloseClipboard().map_err(|error| error.to_string())?;
-    }
-    Ok(())
+    let mut clipboard = arboard::Clipboard::new().map_err(|error| error.to_string())?;
+    clipboard
+        .set_text(value.to_string())
+        .map_err(|error| error.to_string())
 }
 
 fn create_hidden_window() -> Result<HWND, String> {
