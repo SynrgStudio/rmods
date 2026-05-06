@@ -5,7 +5,7 @@ use std::ffi::c_void;
 use std::ptr::null_mut;
 use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{COLORREF, HINSTANCE, HWND, LPARAM, LRESULT, POINT, RECT, WPARAM};
-use windows::Win32::Graphics::Gdi::{CreateSolidBrush, DeleteObject, FillRect, GetDC, GetPixel, ReleaseDC, SetBkColor, SetStretchBltMode, SetTextColor, StretchBlt, TextOutW, SRCCOPY, STRETCH_BLT_MODE};
+use windows::Win32::Graphics::Gdi::{CreateCompatibleDC, CreateCompatibleBitmap, CreateSolidBrush, DeleteDC, DeleteObject, FillRect, GetDC, GetPixel, ReleaseDC, SelectObject, SetBkColor, SetStretchBltMode, SetTextColor, StretchBlt, TextOutW, BitBlt, SRCCOPY, STRETCH_BLT_MODE};
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_ESCAPE, VK_LBUTTON};
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GetCursorPos, GetSystemMetrics, LoadCursorW,
@@ -214,11 +214,33 @@ fn update_picker_window(
 
     unsafe {
         let _ = MoveWindow(hwnd, pos_x, pos_y, WIN_W, WIN_H, false);
+        let mem_dc = CreateCompatibleDC(window_dc);
+        let bitmap = CreateCompatibleBitmap(window_dc, WIN_W, WIN_H);
+        let old_bitmap = SelectObject(mem_dc, bitmap);
+        draw_picker(mem_dc, screen_dc, x, y, color, format);
+        let _ = BitBlt(window_dc, 0, 0, WIN_W, WIN_H, mem_dc, 0, 0, SRCCOPY);
+        let _ = SelectObject(mem_dc, old_bitmap);
+        let _ = DeleteObject(bitmap);
+        let _ = DeleteDC(mem_dc);
+    }
+}
+
+fn draw_picker(
+    hdc: windows::Win32::Graphics::Gdi::HDC,
+    screen_dc: windows::Win32::Graphics::Gdi::HDC,
+    x: i32,
+    y: i32,
+    color: (u8, u8, u8),
+    format: Format,
+) {
+    const WIN_W: i32 = 230;
+    const WIN_H: i32 = 170;
+    unsafe {
         let bg = CreateSolidBrush(COLORREF(0x00111111));
-        let _ = FillRect(window_dc, &RECT { left: 0, top: 0, right: WIN_W, bottom: WIN_H }, bg);
+        let _ = FillRect(hdc, &RECT { left: 0, top: 0, right: WIN_W, bottom: WIN_H }, bg);
         let _ = DeleteObject(bg);
 
-        let _ = StretchBlt(window_dc, 5, 10, 150, 150, screen_dc, x - 7, y - 7, 15, 15, SRCCOPY);
+        let _ = StretchBlt(hdc, 5, 10, 150, 150, screen_dc, x - 7, y - 7, 15, 15, SRCCOPY);
 
         let red = CreateSolidBrush(COLORREF(0x000000FF));
         for rect in [
@@ -227,28 +249,38 @@ fn update_picker_window(
             RECT { left: 74, top: 79, right: 76, bottom: 91 },
             RECT { left: 84, top: 79, right: 86, bottom: 91 },
         ] {
-            let _ = FillRect(window_dc, &rect, red);
+            let _ = FillRect(hdc, &rect, red);
         }
         let _ = DeleteObject(red);
 
         let (r, g, b) = color;
         let chip = CreateSolidBrush(COLORREF(u32::from(r) | (u32::from(g) << 8) | (u32::from(b) << 16)));
-        let _ = FillRect(window_dc, &RECT { left: 165, top: 10, right: 215, bottom: 60 }, chip);
+        let _ = FillRect(hdc, &RECT { left: 165, top: 10, right: 215, bottom: 60 }, chip);
         let _ = DeleteObject(chip);
 
-        let _ = SetBkColor(window_dc, COLORREF(0x00111111));
-        let _ = SetTextColor(window_dc, COLORREF(0x00FFFFFF));
+        let _ = SetBkColor(hdc, COLORREF(0x00111111));
+        let _ = SetTextColor(hdc, COLORREF(0x00FFFFFF));
         let hex = format_color(color, Format::Hex);
         let text = wide_no_null(&hex);
-        let _ = TextOutW(window_dc, 160, 72, &text);
+        let _ = TextOutW(hdc, 160, 72, &text);
         let preview = format_color(color, format);
         let first_line = preview.lines().next().unwrap_or(&preview);
-        let text = wide_no_null(first_line);
-        let _ = TextOutW(window_dc, 160, 96, &text);
-        let help = wide_no_null("Click copy | Esc cancel");
-        let _ = SetTextColor(window_dc, COLORREF(0x00AAAAAA));
-        let _ = TextOutW(window_dc, 144, 136, &help);
+        let text = wide_no_null(&truncate_text(first_line, 11));
+        let _ = TextOutW(hdc, 160, 96, &text);
+        let help1 = wide_no_null("Click copy");
+        let help2 = wide_no_null("Esc cancel");
+        let _ = SetTextColor(hdc, COLORREF(0x00AAAAAA));
+        let _ = TextOutW(hdc, 160, 122, &help1);
+        let _ = TextOutW(hdc, 160, 142, &help2);
     }
+}
+
+fn truncate_text(value: &str, max_chars: usize) -> String {
+    let count = value.chars().count();
+    if count <= max_chars {
+        return value.to_string();
+    }
+    value.chars().take(max_chars.saturating_sub(1)).collect::<String>() + "…"
 }
 
 fn wide_no_null(value: &str) -> Vec<u16> {

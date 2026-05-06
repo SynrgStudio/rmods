@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-06T16:59:45Z",
+  "generated_at": "2026-05-06T17:03:24Z",
   "modules": [
     {
       "id": "calculator",
@@ -27,17 +27,17 @@
     {
       "id": "color-picker",
       "name": "color-picker",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "description": "Pick a screen color and copy it to clipboard.",
       "kind": "rpack",
       "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/color-picker",
-      "sha256": "cf1cc06e3f0dca3b17fd18a4fa15e99c8277e097a533a7085eb177e122e06913",
-      "size": 193992,
+      "sha256": "cc49dedc665a4b945cf99228aef85d21d7e19a0d33a00ffe7a6300d16a37dd8d",
+      "size": 197072,
       "files": [
         {
           "path": "bin/color-picker.exe",
-          "sha256": "8ad9b48dd09d49afc591578ea7775c53717a6088280876317c433ea6895fc1be",
-          "size": 190976
+          "sha256": "4b44b00ed7ffa209d5f16f3cb837890fd4d3079ed521d0f4b82539fa55512eb7",
+          "size": 194048
         },
         {
           "path": "config.json",
@@ -51,8 +51,8 @@
         },
         {
           "path": "module.toml",
-          "sha256": "a06cb6f7a65defaaaf7f5af721f720c2fdbd8f39cc9afb1d7c981bcca8820624",
-          "size": 205
+          "sha256": "20d6dcb03c8446314b21764b4eaa4e71e52f428032dc4f40eb0c833a6522ed2b",
+          "size": 213
         },
         {
           "path": "README.md",
