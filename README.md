@@ -35,4 +35,4 @@ https://raw.githubusercontent.com/SynrgStudio/rmods/main/modules/<file>.rmod
 2. Run `python .\scripts\generate-registry.py`.
 3. Commit the `.rmod` and generated `registry.json`.
 
-A GitHub Action will be added to run the same generator automatically on push.
+The `Update rMods registry` GitHub Action runs the generator automatically when `modules/**`, `scripts/generate-registry.py`, or the workflow file changes. If generated `registry.json` differs, the action commits it with the GitHub Actions bot. If it is unchanged, the action exits without creating an empty commit.

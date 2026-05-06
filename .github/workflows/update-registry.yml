@@ -1,0 +1,56 @@
+name: Update rMods registry
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "modules/**"
+      - "scripts/generate-registry.py"
+      - ".github/workflows/update-registry.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-registry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Generate registry
+        run: python scripts/generate-registry.py
+
+      - name: Check generated registry
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          registry = json.loads(Path("registry.json").read_text(encoding="utf-8"))
+          assert registry["schema"] == 1
+          assert isinstance(registry["modules"], list)
+          print(f"registry contains {len(registry['modules'])} module(s)")
+          PY
+
+      - name: Commit registry changes
+        run: |
+          if git diff --quiet -- registry.json; then
+            echo "registry.json is already up to date"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add registry.json
+          git commit -m "chore: update rmods registry"
+          git push
