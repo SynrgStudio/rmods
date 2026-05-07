@@ -1,0 +1,11 @@
+{
+  "id": "rtasks",
+  "name": "RTasks",
+  "version": "0.1.8",
+  "description": "Native task backend and panel companion.",
+  "download_url": "https://github.com/SynrgStudio/rtasks/releases/latest/download/rtasks.exe",
+  "sha256": "7251411f427169859162ffea371394e48bc384de086e98e1311dfc6dee4ccfd2",
+  "size": 5004288,
+  "companion_executable": "rtasks.exe",
+  "tags": ["native", "companion", "tasks", "panel"]
+}

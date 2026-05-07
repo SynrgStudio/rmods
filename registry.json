@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generated_at": "2026-05-06T23:41:24Z",
+  "generated_at": "2026-05-07T05:26:05Z",
   "modules": [
     {
       "id": "calculator",
@@ -31,8 +31,8 @@
       "description": "Pick a screen color and copy it to clipboard.",
       "kind": "rpack",
       "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/color-picker",
-      "sha256": "4e563c8f5da1eaf6eab9587a7c15e7b8ad09621c9c7e3ef2bfa9d3fc8ea6f291",
-      "size": 267208,
+      "sha256": "10b106ad7817dc37e375dc461c5b6c8e142d91445a8933596e94c46f2cda4019",
+      "size": 267216,
       "files": [
         {
           "path": "bin/color-picker.exe",
@@ -51,8 +51,8 @@
         },
         {
           "path": "module.toml",
-          "sha256": "3eea1caeac499b70d2b1a1a4b3bbe64ffdc3fa3de32a03f67608d489168f7bb0",
-          "size": 205
+          "sha256": "abb2d7540db90a4ee0e1b5b83ea4403278974e2786f8c4807d053bbca14d2ce9",
+          "size": 213
         },
         {
           "path": "README.md",
@@ -74,14 +74,49 @@
       "tags": []
     },
     {
+      "id": "rsnip",
+      "name": "RSnip",
+      "version": "0.1.2",
+      "description": "Native screenshot, recording, and OCR companion.",
+      "kind": "companion",
+      "download_url": "https://github.com/SynrgStudio/rSnip/releases/latest/download/rsnip.exe",
+      "sha256": "4701988ff6438a0e76313559cef74201c5b5065d7e429e608745c5b9c9ab910f",
+      "size": 8909312,
+      "companion_executable": "rsnip.exe",
+      "tags": [
+        "native",
+        "companion",
+        "screenshot",
+        "recording",
+        "ocr"
+      ]
+    },
+    {
+      "id": "rtasks",
+      "name": "RTasks",
+      "version": "0.1.8",
+      "description": "Native task backend and panel companion.",
+      "kind": "companion",
+      "download_url": "https://github.com/SynrgStudio/rtasks/releases/latest/download/rtasks.exe",
+      "sha256": "7251411f427169859162ffea371394e48bc384de086e98e1311dfc6dee4ccfd2",
+      "size": 5004288,
+      "companion_executable": "rtasks.exe",
+      "tags": [
+        "native",
+        "companion",
+        "tasks",
+        "panel"
+      ]
+    },
+    {
       "id": "shortcuts",
       "name": "shortcuts",
       "version": "0.3.4",
       "description": "Exact search aliases for launching favorite targets.",
       "kind": "rpack",
       "base_url": "https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/shortcuts",
-      "sha256": "e723695f0cf04091a185b0c75a479180d1ba1d354c7ebfa86e015eef84d0872d",
-      "size": 8542,
+      "sha256": "5ba4a0b58f4f0a5e3581457c74608c7bfb55852d4dd7c396314152b6fb0ba368",
+      "size": 8550,
       "files": [
         {
           "path": "config.json",
@@ -95,8 +130,8 @@
         },
         {
           "path": "module.toml",
-          "sha256": "00b92356e10a9787d2febdf9cfa96153a7a5a158c4e22fcc068c48f3a4b0f7cb",
-          "size": 229
+          "sha256": "2773e56387ae528e0837f55ee399c7b000daab262aae6f44df6ffa3c62bde5c6",
+          "size": 237
         },
         {
           "path": "README.md",

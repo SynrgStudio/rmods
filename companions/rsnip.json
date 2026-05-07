@@ -1,0 +1,11 @@
+{
+  "id": "rsnip",
+  "name": "RSnip",
+  "version": "0.1.2",
+  "description": "Native screenshot, recording, and OCR companion.",
+  "download_url": "https://github.com/SynrgStudio/rSnip/releases/latest/download/rsnip.exe",
+  "sha256": "4701988ff6438a0e76313559cef74201c5b5065d7e429e608745c5b9c9ab910f",
+  "size": 8909312,
+  "companion_executable": "rsnip.exe",
+  "tags": ["native", "companion", "screenshot", "recording", "ocr"]
+}

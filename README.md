@@ -14,19 +14,23 @@ rmods/
       module.js
       config.json
       README.md
+  companions/
+    rsnip.json
+    rtasks.json
   registry.json
   scripts/
     generate-registry.py
 ```
 
-`registry.json` is generated from `modules/*.rmod` and `rpacks/*`. Do not edit it by hand.
+`registry.json` is generated from `modules/*.rmod`, `rpacks/*`, and `companions/*.json`. Do not edit it by hand.
 
 ## Package kinds
 
 - `rmod`: single-file UTF-8 text module.
 - `rpack`: folder module for multi-file modules, helpers, scripts, assets, config, and docs.
+- `companion`: native rMenu-managed application installed under `<data_dir>\companions\<id>`.
 
-An `rpack` is a folder, not a zip/archive.
+An `rpack` is a folder, not a zip/archive. A `companion` is not loaded as a module; rMenu manages its binary install/update lifecycle and keeps native IPC integration in rMenu.
 
 Some rpacks declare a `[resident]` helper in `module.toml`. `rmenu-daemon` starts/stops those helpers after install and on daemon lifecycle events. Resident helpers may use OS integrations such as low-level hooks, so their README should document exact behavior and security implications.
 
@@ -41,7 +45,7 @@ Current resident rpacks:
 python .\scripts\generate-registry.py
 ```
 
-The generator validates every `.rmod` and every `rpack`, extracts metadata, computes SHA-256/size integrity data, and writes deterministic `registry.json` records.
+The generator validates every `.rmod`, every `rpack`, and every companion metadata file, extracts metadata, computes or verifies SHA-256/size integrity data, and writes deterministic `registry.json` records.
 
 Default raw URLs point to:
 
@@ -64,4 +68,11 @@ https://raw.githubusercontent.com/SynrgStudio/rmods/main/rpacks/<module>/<file>
 4. Run `python .\scripts\generate-registry.py`.
 5. Commit the folder and generated `registry.json`.
 
-The `Update rMods registry` GitHub Action runs the generator automatically when `modules/**`, `rpacks/**`, `scripts/generate-registry.py`, or the workflow file changes. If generated `registry.json` differs, the action commits it with the GitHub Actions bot. If it is unchanged, the action exits without creating an empty commit.
+## Add a native companion
+
+1. Create `companions/<id>.json`.
+2. Include `id`, `name`, `version`, `description`, `download_url`, `sha256`, `size`, `companion_executable`, and optional `tags`.
+3. Run `python .\scripts\generate-registry.py`.
+4. Commit the metadata and generated `registry.json`.
+
+The `Update rMods registry` GitHub Action runs the generator automatically when `modules/**`, `rpacks/**`, `companions/**`, `scripts/generate-registry.py`, or the workflow file changes. If generated `registry.json` differs, the action commits it with the GitHub Actions bot. If it is unchanged, the action exits without creating an empty commit.

@@ -7,6 +7,7 @@ on:
     paths:
       - "modules/**"
       - "rpacks/**"
+      - "companions/**"
       - "scripts/generate-registry.py"
       - ".github/workflows/update-registry.yml"
   workflow_dispatch:

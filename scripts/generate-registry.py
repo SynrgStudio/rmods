@@ -17,6 +17,7 @@ SUPPORTED_API_VERSION = 1
 SUPPORTED_MODULE_KIND = "script"
 REGISTRY_KIND_RMOD = "rmod"
 REGISTRY_KIND_RPACK = "rpack"
+REGISTRY_KIND_COMPANION = "companion"
 REQUIRED_HEADERS = ("name", "version", "api_version", "kind", "capabilities")
 REQUIRED_MANIFEST_FIELDS = ("name", "version", "api_version", "kind", "entry", "capabilities")
 
@@ -57,6 +58,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("registry.json"),
         help="Output registry JSON path. Default: registry.json",
+    )
+    parser.add_argument(
+        "--companions-dir",
+        type=Path,
+        default=Path("companions"),
+        help="Directory containing companion metadata JSON files. Default: companions",
     )
     parser.add_argument(
         "--owner",
@@ -354,6 +361,67 @@ def build_rpack_record(path: Path, parsed: ParsedManifest, base_url: str) -> dic
     return record
 
 
+
+def validate_companion_metadata(path: Path, values: dict[str, Any]) -> None:
+    required = ("id", "name", "version", "description", "download_url", "sha256", "size", "companion_executable")
+    for key in required:
+        if key not in values or values[key] in ("", [], None):
+            raise RegistryError(f"{path}: missing required companion field: {key}")
+    if not is_safe_id(str(values["id"])):
+        raise RegistryError(f"{path}: unsafe companion id: {values['id']}")
+    if not str(values["download_url"]).startswith(("https://", "http://", "file://")):
+        raise RegistryError(f"{path}: invalid companion download_url: {values['download_url']}")
+    sha256 = str(values["sha256"])
+    if len(sha256) != 64 or any(ch not in "0123456789abcdefABCDEF" for ch in sha256):
+        raise RegistryError(f"{path}: invalid companion sha256")
+    try:
+        size = int(values["size"])
+    except (TypeError, ValueError) as error:
+        raise RegistryError(f"{path}: companion size must be numeric") from error
+    if size <= 0:
+        raise RegistryError(f"{path}: companion size must be positive")
+    if not is_safe_relative_path(str(values["companion_executable"])):
+        raise RegistryError(f"{path}: unsafe companion executable path")
+
+
+def is_safe_id(value: str) -> bool:
+    return (
+        0 < len(value) <= 96
+        and not value.startswith(".")
+        and not value.endswith(".")
+        and ".." not in value
+        and all(ch.isascii() and (ch.isalnum() or ch in "-_.") for ch in value)
+    )
+
+
+def parse_companion(path: Path) -> dict[str, Any]:
+    try:
+        values = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise RegistryError(f"{path}: companion JSON is invalid: {error}") from error
+    if not isinstance(values, dict):
+        raise RegistryError(f"{path}: companion metadata must be an object")
+    validate_companion_metadata(path, values)
+    return values
+
+
+def build_companion_record(path: Path, values: dict[str, Any]) -> dict[str, Any]:
+    record: dict[str, Any] = {
+        "id": str(values["id"]),
+        "name": str(values["name"]),
+        "version": str(values["version"]),
+        "description": str(values["description"]),
+        "kind": REGISTRY_KIND_COMPANION,
+        "download_url": str(values["download_url"]),
+        "sha256": str(values["sha256"]).lower(),
+        "size": int(values["size"]),
+        "companion_executable": str(values["companion_executable"]),
+        "tags": [str(tag) for tag in values.get("tags", [])],
+    }
+    if requires_rmenu := values.get("requires_rmenu"):
+        record["requires_rmenu"] = str(requires_rmenu)
+    return record
+
 def validate_duplicate_ids(records: list[dict[str, Any]]) -> None:
     seen: dict[str, str] = {}
     for record in records:
@@ -366,7 +434,7 @@ def validate_duplicate_ids(records: list[dict[str, Any]]) -> None:
         seen[module_id] = source
 
 
-def generate_registry(modules_dir: Path, rpacks_dir: Path, modules_base_url: str, rpacks_base_url: str) -> dict[str, Any]:
+def generate_registry(modules_dir: Path, rpacks_dir: Path, companions_dir: Path, modules_base_url: str, rpacks_base_url: str) -> dict[str, Any]:
     records: list[dict[str, Any]] = []
 
     if modules_dir.exists():
@@ -381,8 +449,14 @@ def generate_registry(modules_dir: Path, rpacks_dir: Path, modules_base_url: str
         rpack_paths = sorted((path for path in rpacks_dir.iterdir() if path.is_dir()), key=lambda path: path.name.lower())
         records.extend(build_rpack_record(path, parse_manifest(path / "module.toml"), rpacks_base_url) for path in rpack_paths)
 
+    if companions_dir.exists():
+        if not companions_dir.is_dir():
+            raise RegistryError(f"companions path is not a directory: {companions_dir}")
+        companion_paths = sorted(companions_dir.glob("*.json"), key=lambda path: path.name.lower())
+        records.extend(build_companion_record(path, parse_companion(path)) for path in companion_paths)
+
     if not records:
-        raise RegistryError("no modules or rpacks found")
+        raise RegistryError("no modules, rpacks, or companions found")
 
     records.sort(key=lambda record: record["id"].lower())
     validate_duplicate_ids(records)
@@ -415,7 +489,7 @@ def main() -> int:
     )
 
     try:
-        registry = generate_registry(args.modules_dir, args.rpacks_dir, modules_base_url, rpacks_base_url)
+        registry = generate_registry(args.modules_dir, args.rpacks_dir, args.companions_dir, modules_base_url, rpacks_base_url)
         write_registry(args.output, registry)
     except RegistryError as error:
         print(f"error: {error}")
